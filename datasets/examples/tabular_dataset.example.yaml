@@ -1,0 +1,68 @@
+name: ExampleTabularStudy
+aliases: [example-tabular]
+table_prefix: example_tabular_
+entity_key: participant_id
+include_in_cross_dataset: true
+
+loader:
+  type: tabular
+
+tables:
+  - name: example_tabular_sleep
+    source:
+      uri: data/example_tabular/sleep.csv.gz
+      format: csv
+      compression: infer
+      chunksize: 50000
+    infer_unlisted_columns: true
+    date_columns: [event_date]
+    columns:
+      participant_id:
+        source: user_id
+        type: text
+        required: true
+      event_date:
+        source: summary_date
+        type: date
+        required: true
+      duration_minutes:
+        source: sleep_duration_minutes
+        type: float
+
+sql_guideline: >
+  Join participant-level tables on participant_id and use event_date for daily
+  analysis.
+
+schema_metadata:
+  example_tabular_sleep:
+    description: Daily wearable sleep summaries.
+    keywords: [sleep, sleep duration, wearable]
+    columns:
+      participant_id:
+        description: Stable participant identifier within ExampleTabularStudy.
+        keywords: [participant, user]
+        aliases: [user_id]
+      event_date:
+        description: Date assigned to the nightly sleep summary.
+        keywords: [sleep date, summary date]
+      duration_minutes:
+        description: Total sleep duration.
+        keywords: [sleep duration, total sleep]
+        unit: minutes
+        null_meaning: No valid duration was available for that summary.
+
+kb_documents:
+  - id: example_tabular_sleep_structure
+    table: example_tabular_sleep
+    type: table_info
+    include_in_cross_dataset: true
+    content: >
+      TODO: describe row granularity, units, date meaning, and duplicate policy.
+  - id: example_tabular_sleep_scoring
+    table: example_tabular_sleep
+    type: scoring_rule
+    include_in_cross_dataset: true
+    refers_to: [example_tabular_sleep_structure]
+    content: >
+      TODO: describe score calculation and interpretation.
+harmonized_views: {}

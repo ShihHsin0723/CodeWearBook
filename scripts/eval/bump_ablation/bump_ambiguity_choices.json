@@ -1,0 +1,772 @@
+{
+  "version": 1,
+  "choices": {
+    "question:for each participant, count the number of days with resting heart rate at least 80 bpm during the 30 days leading up to delivery.": {
+      "question": "For each participant, count the number of days with resting heart rate at least 80 bpm during the 30 days leading up to delivery.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_garmin_dailies"
+        ],
+        "table": "bump_garmin_dailies",
+        "option_label": "Garmin Daily Summaries",
+        "option_description": "Daily metrics including resting heart rate from wearables"
+      }
+    },
+    "question:for each participant, compute the percentage of days between enrollment and delivery where we have any oura sleep record. enrollment date can be derived from gestational duration.": {
+      "question": "For each participant, compute the percentage of days between enrollment and delivery where we have any Oura sleep record. Enrollment date can be derived from gestational duration.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "multi_table",
+        "selected_tables": [
+          "bump_oura_sleep",
+          "bump_birthing_data"
+        ],
+        "option_label": "Oura Sleep Records + Birth & Delivery Data",
+        "option_description": "User selected multiple tables during clarification."
+      }
+    },
+    "question:among participants with sufficient oura hrv data, compute the difference in average rmssd between days -60 to -31 vs days -30 to -1 relative to delivery. return top 10 biggest drops.": {
+      "question": "Among participants with sufficient Oura HRV data, compute the difference in average RMSSD between days -60 to -31 vs days -30 to -1 relative to delivery. Return top 10 biggest drops.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "multi_table",
+        "selected_tables": [
+          "bump_oura_readiness",
+          "bump_birthing_data"
+        ],
+        "option_label": "Bump Oura Readiness + Bump Birthing Data",
+        "option_description": "Computing HRV changes relative to delivery date using Oura and birthing data"
+      }
+    },
+    "question:create a participant-day dataset for dates where garmin daily stress and garmin sleep records both exist. include each participant’s average stress level and total sleep duration in minutes for that same date.": {
+      "question": "Create a participant-day dataset for dates where Garmin daily stress and Garmin sleep records both exist. Include each participant’s average stress level and total sleep duration in minutes for that same date.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_garmin_dailies"
+        ],
+        "table": "bump_garmin_dailies",
+        "option_label": "Garmin Daily Summaries",
+        "option_description": "Daily stress metrics with activity and physiology data"
+      }
+    },
+    "question:extract each participant’s health insurance status from the survey, including the response date.": {
+      "question": "Extract each participant’s health insurance status from the survey, including the response date.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Bump Surveys",
+        "option_description": "Retrieving health insurance status and response dates from survey data"
+      }
+    },
+    "question:for individual x, return their health insurance status.": {
+      "question": "For individual X, return their health insurance status.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Survey Responses",
+        "option_description": "Self-reported health data including insurance status"
+      }
+    },
+    "question:return each participant’s survey responses about current work situation and full-time work status, including the question and answer text.": {
+      "question": "Return each participant’s survey responses about current work situation and full-time work status, including the question and answer text.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Bump Surveys",
+        "option_description": "Retrieving work situation survey responses from participant surveys"
+      }
+    },
+    "question:create a participant-level dataframe indicating whether each participant has each previously reported medical condition from the survey.": {
+      "question": "Create a participant-level dataframe indicating whether each participant has each previously reported medical condition from the survey.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Bump Surveys",
+        "option_description": "Using surveys table for medical history conditions"
+      }
+    },
+    "question:return each participant’s reported household size.": {
+      "question": "Return each participant’s reported household size.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Bump Surveys",
+        "option_description": "Retrieving household size from survey responses"
+      }
+    },
+    "question:create one participant-level dataframe containing all demographic, household, work, resource access, transportation, and social connection information as separate columns.": {
+      "question": "Create one participant-level dataframe containing all demographic, household, work, resource access, transportation, and social connection information as separate columns.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Survey responses table",
+        "option_description": "Contains demographics, household, work, social connection data"
+      }
+    },
+    "question:extract the smoking status of participant x.": {
+      "question": "Extract the smoking status of participant X.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Survey responses",
+        "option_description": "Self-reported demographics and medical history including smoking"
+      }
+    },
+    "question:does participant x have any allergies?": {
+      "question": "Does participant X have any allergies?",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Survey Responses",
+        "option_description": "Medical history and health questionnaires including allergy information"
+      }
+    },
+    "question:for the first participant, use all survey rows with title like \"%daily survey%\" and pivot daily changes or new symptoms into separate columns by record_id and event_date, including noticed symptoms, nausea/vomiting, fatigue, mood changes, shortness of breath, swelling, walking changes, memory changes, other symptoms, and postpartum symptom items.": {
+      "question": "For the first participant, use all survey rows with title LIKE \"%Daily Survey%\" and pivot daily changes or new symptoms into separate columns by record_id and event_date, including noticed symptoms, nausea/vomiting, fatigue, mood changes, shortness of breath, swelling, walking changes, memory changes, other symptoms, and postpartum symptom items.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Bump Surveys",
+        "option_description": "Using bump_surveys table for daily survey pivoting"
+      }
+    },
+    "question:for the first participant, use survey data to pivot daily stress measures into separate columns by record_id and event_date, including felt stressed, stress timing, stress duration, sense of control, coping, reasons, and comments.": {
+      "question": "For the first participant, use survey data to pivot daily stress measures into separate columns by record_id and event_date, including felt stressed, stress timing, stress duration, sense of control, coping, reasons, and comments.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Bump Surveys",
+        "option_description": "Using bump_surveys table for daily stress survey data pivot"
+      }
+    },
+    "question:for individual x, return their survey responses to questions about feeling in control.": {
+      "question": "For individual X, return their survey responses to questions about feeling in control.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Bump Surveys",
+        "option_description": "Retrieving survey responses about feeling in control for individual X"
+      }
+    },
+    "question:for each participant and date, create one row with all emotional support survey question responses as separate columns and include the total score for that day.": {
+      "question": "For each participant and date, create one row with all emotional support survey question responses as separate columns and include the total score for that day.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Bump Surveys",
+        "option_description": "Pivoting emotional support survey responses from bump_surveys table"
+      }
+    },
+    "question:extract all fatigue survey responses from participants.": {
+      "question": "Extract all fatigue survey responses from participants.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Bump Surveys",
+        "option_description": "Retrieving fatigue survey responses from participants"
+      }
+    },
+    "question:collect each participant’s self-reported general health, quality-of-life, physical health, mental health, social relationships, and role functioning.": {
+      "question": "Collect each participant’s self-reported general health, quality-of-life, physical health, mental health, social relationships, and role functioning.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Bump Surveys",
+        "option_description": "Using survey responses table for all self-reported health measures"
+      }
+    },
+    "question:how frequently did participants report that emotional problems affected them in the past 7 days?": {
+      "question": "How frequently did participants report that emotional problems affected them in the past 7 days?",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Bump Surveys",
+        "option_description": "Analyzing emotional problem frequency from survey responses"
+      }
+    },
+    "question:how did participants rate their average fatigue over the past week based on their reponse to the global survey?": {
+      "question": "How did participants rate their average fatigue over the past week based on their reponse to the global survey?",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "General Survey Responses",
+        "option_description": "All BUMP survey data including fatigue questions"
+      }
+    },
+    "question:create a dataframe capturing participants' self-reported average pain levels over the previous 7 days based on their global survey reponses.": {
+      "question": "Create a dataframe capturing participants' self-reported average pain levels over the previous 7 days based on their global survey reponses.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Bump Surveys",
+        "option_description": "Using bump_surveys table for global survey pain responses"
+      }
+    },
+    "question:how did participants rate their ability to carry out everyday physical activities?": {
+      "question": "How did participants rate their ability to carry out everyday physical activities?",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Survey Responses",
+        "option_description": "Self-reported ratings from PROMIS physical function surveys"
+      }
+    },
+    "question:how many planned hospital admissions did each participant report?": {
+      "question": "How many planned hospital admissions did each participant report?",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Bump Surveys",
+        "option_description": "Querying survey responses for hospital admission data"
+      }
+    },
+    "question:how many unplanned hospital admissions did each participant report?": {
+      "question": "How many unplanned hospital admissions did each participant report?",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_adverse_event_report"
+        ],
+        "table": "bump_adverse_event_report",
+        "option_label": "Adverse Event Reports",
+        "option_description": "Free-text reports of adverse events including hospitalizations"
+      }
+    },
+    "question:retrieve the number of self-reported pregnancy-related hospital or acute care admissions requiring at least one overnight stay each month.": {
+      "question": "Retrieve the number of self-reported pregnancy-related hospital or acute care admissions requiring at least one overnight stay each month.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Bump Surveys",
+        "option_description": "Using survey responses for self-reported hospital admissions data"
+      }
+    },
+    "question:at what temporal resolution (daily, weekly, or monthly) is the number of pregnancy-related hospital or acute care admissions recorded in the healthcare utilization survey?": {
+      "question": "At what temporal resolution (daily, weekly, or monthly) is the number of pregnancy-related hospital or acute care admissions recorded in the healthcare utilization survey?",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Bump Surveys",
+        "option_description": "Checking healthcare utilization survey temporal resolution in BUMP surveys"
+      }
+    },
+    "question:retrieve the self-reported number of emergency room or emergency department visits within the last month for each participant.": {
+      "question": "Retrieve the self-reported number of emergency room or emergency department visits within the last month for each participant.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Bump Surveys",
+        "option_description": "Using surveys table for self-reported emergency room visits data"
+      }
+    },
+    "question:identify whether the individual visited an emergency room, hospital, or acute care facility at any time during the past month.": {
+      "question": "Identify whether the individual visited an emergency room, hospital, or acute care facility at any time during the past month.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Bump Surveys",
+        "option_description": "Checking survey responses for emergency/hospital visit questions"
+      }
+    },
+    "question:retrieve the self-reported total length of all hospital admissions and readmissions within the last month (in days) for each participant.": {
+      "question": "Retrieve the self-reported total length of all hospital admissions and readmissions within the last month (in days) for each participant.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Bump Surveys",
+        "option_description": "Using survey responses for self-reported hospital admission data"
+      }
+    },
+    "question:extract patients' experience of nausea and vomiting in the past week.": {
+      "question": "Extract patients' experience of nausea and vomiting in the past week.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Survey Responses",
+        "option_description": "Self-reported symptoms including nausea and vomiting data"
+      }
+    },
+    "question:summarize how pain affected each patients' daily activities, work at home, social activities, chores, and mood.": {
+      "question": "Summarize how pain affected each patients' daily activities, work at home, social activities, chores, and mood.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "General Survey Responses",
+        "option_description": "All survey data including pain, activities, mood questions"
+      }
+    },
+    "question:list out the perinatal ptsd symptoms for each patient across all dates.": {
+      "question": "List out the Perinatal PTSD symptoms for each patient across all dates.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_perinatal_ptsd"
+        ],
+        "table": "bump_perinatal_ptsd",
+        "option_label": "Bump Perinatal Ptsd",
+        "option_description": "Retrieving perinatal PTSD symptoms for all patients"
+      }
+    },
+    "question:create a dataframe where each column represents a personality trait question, with one row per participant and survey date.": {
+      "question": "Create a dataframe where each column represents a personality trait question, with one row per participant and survey date.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Bump Surveys",
+        "option_description": "Creating personality trait dataframe from survey responses"
+      }
+    },
+    "question:list survey responses where participants reported acute or serious symptoms such as infection, fever, urinary symptoms, severe headaches, vision changes, upper abdominal pain, or heavy bleeding.": {
+      "question": "List survey responses where participants reported acute or serious symptoms such as infection, fever, urinary symptoms, severe headaches, vision changes, upper abdominal pain, or heavy bleeding.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Bump Surveys",
+        "option_description": "Searching survey responses for reported acute symptoms"
+      }
+    },
+    "question:what were the self-reported effects of poor sleep on each individual’s alertness, daytime functioning, and mood over the past 7 days?": {
+      "question": "What were the self-reported effects of poor sleep on each individual’s alertness, daytime functioning, and mood over the past 7 days?",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Bump Surveys",
+        "option_description": "Looking at self-reported sleep effects from survey responses"
+      }
+    },
+    "question:what is the missingness pattern of the average stress level for individual x?": {
+      "question": "What is the missingness pattern of the average stress level for individual X?",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_garmin_dailies"
+        ],
+        "table": "bump_garmin_dailies",
+        "option_label": "Daily Stress Summaries",
+        "option_description": "Daily average stress levels and activity metrics"
+      }
+    },
+    "question:participants with >= 5 consecutive days of missing survey responses": {
+      "question": "Participants with >= 5 consecutive days of missing survey responses",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Bump Surveys",
+        "option_description": "Finding participants with 5+ consecutive days of missing survey responses"
+      }
+    },
+    "question:for each participant, count the number of days with resting heart rate at least 80 bpm during the 30 days before delivery, excluding the delivery date.": {
+      "question": "For each participant, count the number of days with resting heart rate at least 80 bpm during the 30 days before delivery, excluding the delivery date.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "multi_table",
+        "selected_tables": [
+          "bump_garmin_dailies",
+          "bump_birthing_data"
+        ],
+        "option_label": "Garmin Daily Summaries + Birth Outcome Data",
+        "option_description": "User selected multiple tables during clarification."
+      }
+    },
+    "question:for each raw oura sleep record, assign it to a 24-hour sleep window with the sleep start date as the start date. add the window start date, window end date, and a participant-specific window id.": {
+      "question": "For each raw Oura sleep record, assign it to a 24-hour sleep window with the sleep start date as the start date. Add the window start date, window end date, and a participant-specific window ID.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_oura_sleep"
+        ],
+        "table": "bump_oura_sleep",
+        "option_label": "Bump Oura Sleep",
+        "option_description": "Processing Oura sleep records with 24-hour window assignments"
+      }
+    },
+    "question:retrieve the self-reported total length of all hospital admissions and readmissions within the last month (in days) for each participant and survey date.": {
+      "question": "Retrieve the self-reported total length of all hospital admissions and readmissions within the last month (in days) for each participant and survey date.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Bump Surveys",
+        "option_description": "Using survey responses for self-reported hospital admission data"
+      }
+    },
+    "question:for each participant and survey date where they reported physical pain, summarize how pain affected daily activities, work at home, social activities, household chores, and mood.": {
+      "question": "For each participant and survey date where they reported physical pain, summarize how pain affected daily activities, work at home, social activities, household chores, and mood.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Bump Surveys",
+        "option_description": "Using BUMP surveys table for pain and activity impact data"
+      }
+    },
+    "question:for each participant and survey date, summarize how pain affected daily activities, work at home, social activities, household chores, and mood.": {
+      "question": "For each participant and survey date, summarize how pain affected daily activities, work at home, social activities, household chores, and mood.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Bump Surveys",
+        "option_description": "Using survey responses table for pain impact on daily activities"
+      }
+    },
+    "question:for each participant, count the number of days with resting heart rate at least 80 bpm during the 30 days leading up to delivery, excluding the day of delivery.": {
+      "question": "For each participant, count the number of days with resting heart rate at least 80 bpm during the 30 days leading up to delivery, excluding the day of delivery.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "multi_table",
+        "selected_tables": [
+          "bump_garmin_dailies",
+          "bump_birthing_data"
+        ],
+        "option_label": "Garmin Daily Summaries + Birth Outcome Data",
+        "option_description": "User selected multiple tables during clarification."
+      }
+    },
+    "question:overlap between complication groups: identify individuals who experienced both preterm birth and gestational diabetes.": {
+      "question": "Overlap between complication groups: identify individuals who experienced both preterm birth and gestational diabetes.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_birthing_data"
+        ],
+        "table": "bump_birthing_data",
+        "option_label": "Birth & Delivery Data",
+        "option_description": "Contains gestational age, delivery details, and maternal complications data"
+      }
+    },
+    "question:for individual x, summarize their baseline biological family history indicators and complications.": {
+      "question": "For individual X, summarize their baseline biological family history indicators and complications.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Medical History Surveys",
+        "option_description": "Self-reported medical and family history survey responses"
+      }
+    },
+    "question:for the first participant, use survey data to pivot daily stress measures into separate columns by record_id and event_date, including felt stressed, stress timing, stress duration, and sense of control.": {
+      "question": "For the first participant, use survey data to pivot daily stress measures into separate columns by record_id and event_date, including felt stressed, stress timing, stress duration, and sense of control.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Bump Surveys",
+        "option_description": "Using bump_surveys table for daily stress survey data pivot"
+      }
+    },
+    "question:for each participant, count the number of days with resting heart rate at least 80 bpm between the day of delivery and 30 days leading up to delivery.": {
+      "question": "For each participant, count the number of days with resting heart rate at least 80 bpm between the day of delivery and 30 days leading up to delivery.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "multi_table",
+        "selected_tables": [
+          "bump_garmin_dailies",
+          "bump_birthing_data"
+        ],
+        "option_label": "Garmin Daily Summaries + Birth Outcome Data",
+        "option_description": "User selected multiple tables during clarification."
+      }
+    },
+    "question:for each raw oura sleep record, assign it to a 24-hour sleep window with the sleep start date as the start date. add the window start date, window end date, and a participant-specific window id by combining window start and record id.": {
+      "question": "For each raw Oura sleep record, assign it to a 24-hour sleep window with the sleep start date as the start date. Add the window start date, window end date, and a participant-specific window ID by combining window start and record id.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_oura_sleep"
+        ],
+        "table": "bump_oura_sleep",
+        "option_label": "Bump Oura Sleep",
+        "option_description": "Processing Oura sleep records with 24-hour windows"
+      }
+    },
+    "question:create a participant-level dataframe with one column for each previously reported medical condition, using 1 if the participant reported the condition and 0 otherwise.": {
+      "question": "Create a participant-level dataframe with one column for each previously reported medical condition, using 1 if the participant reported the condition and 0 otherwise.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Survey Medical History",
+        "option_description": "Medical history from participant surveys including conditions"
+      }
+    },
+    "question:for each participant and survey date, collect self-reported general health, quality of life, physical health, mental health, satisfaction with social activities and relationships, and ability to carry out usual social activities and roles.": {
+      "question": "For each participant and survey date, collect self-reported general health, quality of life, physical health, mental health, satisfaction with social activities and relationships, and ability to carry out usual social activities and roles.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Bump Surveys",
+        "option_description": "Using surveys table for all self-reported health measures"
+      }
+    },
+    "question:from the global survey, return each participant’s self-reported pain rating on average over the previous 7 days for each survey date.": {
+      "question": "From the Global survey, return each participant’s self-reported pain rating on average over the previous 7 days for each survey date.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Bump Surveys",
+        "option_description": "Using bump_surveys table for Global survey pain ratings."
+      }
+    },
+    "question:for each participant, count the number of days with resting heart rate at least 80 bpm between the day before the delivery and 30 days leading up to delivery.": {
+      "question": "For each participant, count the number of days with resting heart rate at least 80 bpm between the day before the delivery and 30 days leading up to delivery.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "multi_table",
+        "selected_tables": [
+          "bump_garmin_dailies",
+          "bump_birthing_data"
+        ],
+        "option_label": "Garmin Daily Summaries + Birth Outcome Data",
+        "option_description": "User selected multiple tables during clarification."
+      }
+    },
+    "question:for each raw oura sleep record, keep all original columns and add sleep window fields. use the calendar date of bedtime_start as window_start, use the next calendar day as window_end, and create window_id by combining window_start followed by record_id.": {
+      "question": "For each raw Oura sleep record, keep all original columns and add sleep window fields. Use the calendar date of bedtime_start as window_start, use the next calendar day as window_end, and create window_id by combining window_start followed by record_id.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_oura_sleep"
+        ],
+        "table": "bump_oura_sleep",
+        "option_label": "Bump Oura Sleep",
+        "option_description": "Adding window fields to raw Oura sleep records"
+      }
+    },
+    "question:for participant x, count the number of days where more than 80% of their valid garmin stress samples were in the very or extremely stressed range.": {
+      "question": "For participant X, count the number of days where more than 80% of their valid Garmin stress samples were in the very or extremely stressed range.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_garmin_stress_details"
+        ],
+        "table": "bump_garmin_stress_details",
+        "option_label": "Stress time series",
+        "option_description": "Continuous stress measurements throughout each day"
+      }
+    },
+    "question:for individual x, summarize their baseline biological family history indicators and complication score.": {
+      "question": "For individual X, summarize their baseline biological family history indicators and complication score.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Medical History Surveys",
+        "option_description": "Self-reported baseline medical and family history responses"
+      }
+    },
+    "question:keep all original oura sleep data and organize each record into a daily sleep window based on the calendar date when sleep began. add the window's start and end dates, and create a window id using the start date followed by the participant id.": {
+      "question": "Keep all original Oura sleep data and organize each record into a daily sleep window based on the calendar date when sleep began. Add the window's start and end dates, and create a window ID using the start date followed by the participant ID.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_oura_sleep"
+        ],
+        "table": "bump_oura_sleep",
+        "option_label": "Bump Oura Sleep",
+        "option_description": "Using Oura sleep data to create daily windows with IDs"
+      }
+    },
+    "question:for each participant, report the expected number of daily survey response days between their first and last survey dates, actual response days, total missing days, longest consecutive missing period, and whether they had at least five consecutive missing days.": {
+      "question": "For each participant, report the expected number of daily survey response days between their first and last survey dates, actual response days, total missing days, longest consecutive missing period, and whether they had at least five consecutive missing days.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Bump Surveys",
+        "option_description": "Analyzing survey response patterns and missing days from bump_surveys table."
+      }
+    },
+    "question:for each participant, report the expected number of survey response days between their first and last survey dates, actual response days, total missing days, longest consecutive missing period, and whether they had at least five consecutive missing days.": {
+      "question": "For each participant, report the expected number of survey response days between their first and last survey dates, actual response days, total missing days, longest consecutive missing period, and whether they had at least five consecutive missing days.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Bump Surveys",
+        "option_description": "Analyzing survey response patterns and missing days from bump_surveys table."
+      }
+    },
+    "question:return each participant’s reported household size. exclude responses where household size is not present.": {
+      "question": "Return each participant’s reported household size. Exclude responses where household size is not present.",
+      "dataset_scope": "BUMP",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "bump_surveys"
+        ],
+        "table": "bump_surveys",
+        "option_label": "Bump Surveys",
+        "option_description": "Retrieving household size from survey responses"
+      }
+    }
+  }
+}

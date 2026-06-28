@@ -1,0 +1,41 @@
+# Python and local environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Runtime caches and local output
+.DS_Store
+.cache/
+cache/
+output/
+logs/
+*.log
+wearable_shared.sqlite
+
+# Generated evaluation artifacts
+ground_truth/
+visualizations/
+**/query_visualizations/
+**/*_visualization*.png
+**/*_bar_graph*.png
+**/*_metrics*.csv
+/scripts/researchers_prompt_runs/
+/scripts/survey_prompt_runs/
+/scripts/sinc_prompt_runs/
+/scripts/eval/results/
+/clinical_notes_analysis/results/local_runs/
+
+# Restricted raw datasets
+/bump/
+/metadata/
+/app_activities/
+/bodyport/
+/camcog/
+/ibdoc/
+/oura/
+/pooply/
+/survey_monkey/
+
+# Generated/de-identified MyExperiences source previews
+/final_wave_5_12_25_previews/

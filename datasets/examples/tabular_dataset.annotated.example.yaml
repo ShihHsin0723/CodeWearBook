@@ -1,0 +1,273 @@
+# Fully annotated manifest for a CSV/Parquet dataset.
+#
+# Copy this file, replace every ExampleStudy/example_ value, and remove any
+# optional sections that do not apply. YAML comments beginning with # are
+# documentation only and are ignored by the manifest loader.
+
+# Required. Stable, user-facing dataset name. It also becomes the value used
+# in the `dataset` column of harmonized views.
+name: ExampleStudy
+
+# Optional. Alternative lowercase names accepted when selecting this dataset.
+# Aliases must not conflict with another installed dataset.
+aliases: [example, example-study]
+
+# Required. SQL-safe prefix owned by this dataset. It must be lowercase, end
+# with an underscore, and prefix every raw table and schema_metadata table.
+table_prefix: example_
+
+# Required. Normalized participant/entity column used to join this dataset's
+# raw tables. This is the database column name, not necessarily the source CSV
+# header. Keep identifiers as text to preserve leading zeros.
+entity_key: participant_id
+
+# Optional; defaults to true. When true, cross-dataset initialization loads
+# this dataset and permits its mappings/eligible KB documents in cross mode.
+include_in_cross_dataset: true
+
+# Required. `tabular` uses the built-in CSV/Parquet loader.
+loader:
+  type: tabular
+
+# Alternative custom Python loader (replace the loader block above if needed):
+# loader:
+#   type: python
+#   create_tables: package.module.create_tables
+#   load_data: package.module.load_data
+
+# Required for loader.type=tabular. Add one entry for every raw database table.
+tables:
+  - # Required. SQL-safe table name beginning with table_prefix.
+    name: example_sleep
+
+    # Required source configuration.
+    source:
+      # Required. Project-relative/local path, exact s3:// object URI, or
+      # Parquet path. S3 prefixes and wildcard patterns are not expanded.
+      uri: s3://example-bucket/example-study/sleep.csv
+
+      # Optional; defaults to csv. Supported values: csv or parquet.
+      format: csv
+
+      # CSV-only optional settings shown with their defaults.
+      delimiter: ","
+      encoding: utf-8
+      compression: infer
+
+      # CSV-only optional row count per database insert chunk. This controls
+      # parsing/insertion batches, not the manifest generator's sample size.
+      chunksize: 50000
+
+      # Parquet-only optional source projection. Uncomment to read only these
+      # source fields from a Parquet object.
+      # columns: [Participant ID, Summary Date, Sleep Score]
+
+    # Optional; defaults to true. When false, only fields declared below are
+    # loaded. Keeping this false gives research datasets a reviewed, stable
+    # schema when new fields appear upstream.
+    infer_unlisted_columns: false
+
+    # Optional. Target database columns that should receive date-aware type
+    # inference when their explicit type is `infer`.
+    date_columns: [event_date]
+
+    # Optional when infer_unlisted_columns=true; otherwise it must include the
+    # entity_key. Keys are normalized target database column names.
+    columns:
+      participant_id:
+        # Optional; defaults to the target key. Exact source header to read.
+        source: Participant ID
+
+        # Optional; defaults to infer. Supported types: infer, text, integer,
+        # float, boolean, date, datetime.
+        type: text
+
+        # Optional; defaults to false. Loading fails if a required field is
+        # absent, empty, or cannot be converted to its declared type.
+        required: true
+
+      event_date:
+        source: Summary Date
+        type: date
+        required: true
+
+      sleep_score:
+        source: Sleep Score
+        type: float
+
+      duration_seconds:
+        source: Sleep Duration Seconds
+        type: float
+
+      hr_average:
+        source: Average Heart Rate
+        type: float
+
+      hr_lowest:
+        source: Lowest Heart Rate
+        type: float
+
+      rmssd:
+        source: RMSSD
+        type: float
+
+      efficiency:
+        source: Sleep Efficiency
+        type: float
+
+# Optional. Always-retrieved SQL guidance for this dataset's standalone scope.
+# Describe join keys, authoritative dates, row-selection rules, and other rules
+# needed to write correct SQL. Never include participant values.
+sql_guideline: >
+  Join ExampleStudy raw tables on participant_id. Use event_date for daily
+  analysis. Select one documented sleep-summary row per participant and date.
+
+# Optional. Semantic descriptions used during schema/table retrieval. Physical
+# columns still come from database introspection; this section adds meaning.
+schema_metadata:
+  # Each key must be a SQL-safe table beginning with table_prefix.
+  example_sleep:
+    # Optional table description shown with the physical schema.
+    description: Daily wearable sleep summaries for ExampleStudy.
+
+    # Optional list of concepts users may mention when looking for this table.
+    keywords: [sleep, wearable, sleep score, sleep duration, HRV, RMSSD]
+
+    # Optional metadata for selected target database columns.
+    columns:
+      participant_id:
+        # Optional plain-language meaning.
+        description: Stable participant identifier within ExampleStudy.
+
+        # Optional retrieval terms specific to this column.
+        keywords: [participant, subject, user]
+
+        # Optional alternate names or abbreviations.
+        aliases: [Participant ID, subject_id]
+
+        # Optional measurement unit. Omit for identifiers/dimension fields.
+        unit: identifier
+
+        # Optional explanation of a SQL NULL in this field.
+        null_meaning: This field is required and should never be null.
+
+      event_date:
+        description: Calendar date assigned to the sleep summary.
+        keywords: [date, sleep date, summary date]
+        aliases: [Summary Date]
+        null_meaning: No valid summary date was available.
+
+      duration_seconds:
+        description: Total sleep-period duration.
+        keywords: [duration, total sleep]
+        aliases: [sleep duration]
+        unit: seconds
+        null_meaning: The wearable did not produce a valid duration.
+
+      rmssd:
+        description: Average overnight heart-rate variability using RMSSD.
+        keywords: [HRV, heart rate variability, recovery]
+        aliases: [RMSSD]
+        unit: ms
+        null_meaning: No valid overnight HRV measurement was available.
+
+# Optional. Retrieval documents containing domain/query semantics that cannot
+# be represented by column metadata alone. `content` is sent to the LLM when
+# retrieved, so never include participant IDs, values, or source-row examples.
+kb_documents:
+  - # Required and globally unique across built-in and installed datasets.
+    id: example_sleep_structure
+
+    # Optional raw table associated with this document.
+    table: example_sleep
+
+    # Optional category used for retrieval/context. Common values include
+    # table_info, information, query_rule, scoring_rule, classifying_rule,
+    # interpretation_rule, time_calculation_rule, and frequency_catalog.
+    type: table_info
+
+    # Optional; defaults to false for an individual KB document. When true,
+    # this document may also appear in cross-dataset querying.
+    include_in_cross_dataset: true
+
+    # Optional list of KB IDs that are prerequisites or companion rules.
+    # References expand bidirectionally and transitively. A cross-enabled
+    # document may refer only to other cross-enabled documents.
+    refers_to: []
+
+    # Required non-empty semantic content.
+    content: >
+      Each row represents one sleep summary for one participant and event date.
+      Apply the documented duplicate-selection rule before daily aggregation.
+
+  - id: example_sleep_score
+    table: example_sleep
+    type: interpretation_rule
+    include_in_cross_dataset: true
+    refers_to: [example_sleep_structure]
+    content: >
+      Sleep score uses the source wearable's 0-100 scale. Higher values indicate
+      better overall sleep quality; cross-source comparison requires compatible
+      score definitions.
+
+  - id: example_sleep_frequency
+    table: example_sleep
+    type: frequency_catalog
+    include_in_cross_dataset: true
+    refers_to: [example_sleep_structure]
+
+    # Frequency-catalog metadata. Use an empty string for row-level records or
+    # a target database column name for an array/measure-specific cadence.
+    measure_column: ""
+
+    # Human-readable expected cadence.
+    frequency_label: daily
+
+    # Optional numeric cadence in minutes; daily = 1440.
+    frequency_minutes: 1440
+
+    content: Daily sleep summaries are expected once every 1440 minutes.
+
+# Optional. Dataset-specific SELECT branches appended to supported canonical
+# cross-dataset views. Each value must be one SELECT, without a semicolon or SQL
+# comments, reading from a table owned by table_prefix. It must alias every
+# canonical output column required by that view.
+harmonized_views:
+  wearable_sleep_daily: |
+    SELECT
+      'ExampleStudy' AS dataset,
+      'ExampleStudy:' || CAST(participant_id AS TEXT) AS participant_key,
+      CAST(participant_id AS TEXT) AS raw_participant_id,
+      DATE(event_date) AS event_date,
+      'example_sleep' AS source_table,
+      CAST(sleep_score AS REAL) AS sleep_score,
+      CAST(duration_seconds AS REAL) AS total_sleep_duration,
+      CAST(hr_average AS REAL) AS hr_average,
+      CAST(hr_lowest AS REAL) AS hr_lowest,
+      CAST(rmssd AS REAL) AS rmssd,
+      CAST(efficiency AS REAL) AS sleep_efficiency
+    FROM example_sleep
+
+# Supported harmonized view keys and their exact required output columns:
+#
+# wearable_sleep_daily:
+#   dataset, participant_key, raw_participant_id, event_date, source_table,
+#   sleep_score, total_sleep_duration, hr_average, hr_lowest, rmssd,
+#   sleep_efficiency
+# wearable_activity_daily:
+#   dataset, participant_key, raw_participant_id, event_date, source_table,
+#   activity_score, steps, active_calories, total_calories, average_met
+# wearable_readiness_daily:
+#   dataset, participant_key, raw_participant_id, event_date, source_table,
+#   readiness_score, score_hrv_balance, score_recovery_index, score_resting_hr
+# wearable_bodyport_daily:
+#   dataset, participant_key, raw_participant_id, event_date, source_table,
+#   weight_kg, bmi_kg_m2, heart_rate, peripheral_fluid,
+#   sway_velocity_mm_sec, backend_sway_area_mm2
+# wearable_ebt_sessions:
+#   dataset, participant_key, raw_participant_id, event_date, source_table,
+#   ebt_bias_point, median_rt_total, mean_rt_total, happy_response_count,
+#   sad_response_count
+# wearable_ema_daily:
+#   dataset, participant_key, raw_participant_id, event_date, source_table,
+#   measure, item_score, normalized_score

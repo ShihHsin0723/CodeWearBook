@@ -1,0 +1,60 @@
+# Copy this file, remove the leading comments, and replace every example value.
+name: ExampleStudy
+aliases: [example, example-study]
+table_prefix: example_
+entity_key: participant_id
+include_in_cross_dataset: true
+
+loader:
+  create_tables: datasets.example_dataset_adapter.create_tables
+  load_data: datasets.example_dataset_adapter.load_data
+
+sql_guideline: >
+  Join ExampleStudy participant-level tables on participant_id. Use event_date
+  for daily analysis unless a table-specific KB document says otherwise.
+
+schema_metadata:
+  example_sleep:
+    description: Daily sleep summaries from the ExampleStudy wearable.
+    keywords: [sleep, sleep score, duration, HRV, RMSSD, efficiency]
+
+kb_documents:
+  - id: example_sleep_granularity
+    table: example_sleep
+    type: table_info
+    include_in_cross_dataset: true
+    content: >
+      example_sleep contains at most one row per participant_id and event_date.
+      duration_minutes is measured in minutes. The harmonized view converts it
+      to seconds.
+  - id: example_sleep_frequency
+    table: example_sleep
+    type: frequency_catalog
+    measure_column: ""
+    frequency_label: daily
+    frequency_minutes: 1440
+    content: Daily sleep collection is expected once every 1440 minutes.
+  - id: example_sleep_score_interpretation
+    table: example_sleep
+    type: interpretation_rule
+    include_in_cross_dataset: true
+    refers_to: [example_sleep_granularity]
+    content: >
+      sleep_score uses the source wearable's 0-100 scale. Compare this score
+      across datasets only when the other source uses a compatible definition.
+
+harmonized_views:
+  wearable_sleep_daily: |
+    SELECT
+      'ExampleStudy' AS dataset,
+      'ExampleStudy:' || participant_id AS participant_key,
+      CAST(participant_id AS TEXT) AS raw_participant_id,
+      DATE(event_date) AS event_date,
+      'example_sleep' AS source_table,
+      CAST(sleep_score AS REAL) AS sleep_score,
+      CAST(duration_minutes * 60.0 AS REAL) AS total_sleep_duration,
+      CAST(hr_average AS REAL) AS hr_average,
+      CAST(hr_lowest AS REAL) AS hr_lowest,
+      CAST(rmssd AS REAL) AS rmssd,
+      CAST(efficiency AS REAL) AS sleep_efficiency
+    FROM example_sleep

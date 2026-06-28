@@ -1,0 +1,408 @@
+{
+  "version": 1,
+  "choices": {
+    "question:list patient x’s biweekly anxiety assessment results and total anxiety score for each assessment.": {
+      "question": "List patient X’s biweekly anxiety assessment results and total anxiety score for each assessment.",
+      "dataset_scope": "SinC",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "sinc_surveys"
+        ],
+        "table": "sinc_surveys",
+        "option_label": "Sinc Surveys",
+        "option_description": "Using sinc_surveys table for anxiety assessment results and scores"
+      }
+    },
+    "question:list patient x’s weekly pain interference assessments and the total score for each assessment.": {
+      "question": "List patient X’s weekly pain interference assessments and the total score for each assessment.",
+      "dataset_scope": "SinC",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "sinc_surveys"
+        ],
+        "table": "sinc_surveys",
+        "option_label": "Sinc Surveys",
+        "option_description": "Using surveys table for Pain Interference assessments and scores"
+      }
+    },
+    "question:list patient x’s weekly perceived stress assessment results and total stress score for each assessment.": {
+      "question": "List patient X’s weekly perceived stress assessment results and total stress score for each assessment.",
+      "dataset_scope": "SinC",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "sinc_surveys"
+        ],
+        "table": "sinc_surveys",
+        "option_label": "Sinc Surveys",
+        "option_description": "Using surveys table for Perceived Stress Scale assessments and scores"
+      }
+    },
+    "question:summarize patient x’s personality profile based on their self-reported trait assessment.": {
+      "question": "Summarize patient X’s personality profile based on their self-reported trait assessment.",
+      "dataset_scope": "SinC",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "sinc_surveys"
+        ],
+        "table": "sinc_surveys",
+        "option_label": "Sinc Surveys",
+        "option_description": "Using survey responses table for personality trait assessment data"
+      }
+    },
+    "question:for patient x, show each gad-7 assessment by date, including the individual anxiety item responses and the total anxiety score.": {
+      "question": "For patient X, show each GAD-7 assessment by date, including the individual anxiety item responses and the total anxiety score.",
+      "dataset_scope": "SinC",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "sinc_surveys"
+        ],
+        "table": "sinc_surveys",
+        "option_label": "Survey Responses",
+        "option_description": "All survey data including GAD-7 anxiety assessments"
+      }
+    },
+    "question:for patient x, show each pain interference assessment by date, including the individual pain interference item responses and the total pain interference score.": {
+      "question": "For patient X, show each Pain Interference assessment by date, including the individual pain interference item responses and the total pain interference score.",
+      "dataset_scope": "SinC",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "sinc_surveys"
+        ],
+        "table": "sinc_surveys",
+        "option_label": "SinC Survey Responses",
+        "option_description": "All survey data including Pain Interference assessments"
+      }
+    },
+    "question:how many users are in the dataset in total?": {
+      "question": "How many users are in the dataset in total?",
+      "dataset_scope": "SinC",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "sinc_user_site_mapping"
+        ],
+        "table": "sinc_user_site_mapping",
+        "option_label": "User Site Mapping",
+        "option_description": "Participant metadata with site assignments for all users"
+      }
+    },
+    "question:which user slept the least on average?": {
+      "question": "Which user slept the least on average?",
+      "dataset_scope": "SinC",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "sinc_oura_sleep"
+        ],
+        "table": "sinc_oura_sleep",
+        "option_label": "Sleep Data",
+        "option_description": "Oura sleep tracking with duration and quality metrics"
+      }
+    },
+    "question:what is the average bmi for user x?": {
+      "question": "What is the average BMI for user X?",
+      "dataset_scope": "SinC",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "sinc_bodyport"
+        ],
+        "table": "sinc_bodyport",
+        "option_label": "Bodyport BMI Data",
+        "option_description": "Direct BMI measurements from Bodyport device"
+      }
+    },
+    "question:what is the phq-8 score for user x across dates?": {
+      "question": "What is the PHQ-8 score for user X across dates?",
+      "dataset_scope": "SinC",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "sinc_phq_8"
+        ],
+        "table": "sinc_phq_8",
+        "option_label": "Sinc Phq 8",
+        "option_description": "Retrieving PHQ-8 scores for user X over time"
+      }
+    },
+    "question:how many patients are overweight but do not have obesity?": {
+      "question": "How many patients are overweight but do not have obesity?",
+      "dataset_scope": "SinC",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "sinc_bodyport"
+        ],
+        "table": "sinc_bodyport",
+        "option_label": "Bodyport BMI Data",
+        "option_description": "Weight and BMI measurements from Bodyport devices"
+      }
+    },
+    "question:how many patients are classified as high in ibdoc?": {
+      "question": "How many patients are classified as HIGH in ibdoc?",
+      "dataset_scope": "SinC",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "sinc_ibdoc"
+        ],
+        "table": "sinc_ibdoc",
+        "option_label": "Sinc Ibdoc",
+        "option_description": "Counting patients with HIGH classification in IBDoc data."
+      }
+    },
+    "question:what are all calprotectin scores and classification for patient x?": {
+      "question": "What are all calprotectin scores and classification for patient X?",
+      "dataset_scope": "SinC",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "sinc_ibdoc"
+        ],
+        "table": "sinc_ibdoc",
+        "option_label": "Sinc Ibdoc",
+        "option_description": "Retrieving calprotectin scores and classifications from IBDoc table"
+      }
+    },
+    "question:list the highest 10 pro2 scores and their classification.": {
+      "question": "List the highest 10 pro2 scores and their classification.",
+      "dataset_scope": "SinC",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "sinc_surveys"
+        ],
+        "table": "sinc_surveys",
+        "option_label": "Survey Responses",
+        "option_description": "PRO2 scores from IBD symptom surveys"
+      }
+    },
+    "question:what are the highest and lowest pro2 scores for user x?": {
+      "question": "What are the highest and lowest pro2 scores for user X?",
+      "dataset_scope": "SinC",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "sinc_surveys"
+        ],
+        "table": "sinc_surveys",
+        "option_label": "Survey Responses",
+        "option_description": "PRO2 scores from IBD symptom surveys"
+      }
+    },
+    "question:what are the top 3 most commonly reported eims?": {
+      "question": "What are the top 3 most commonly reported EIMs?",
+      "dataset_scope": "SinC",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "sinc_extraintestinal_manifestations"
+        ],
+        "table": "sinc_extraintestinal_manifestations",
+        "option_label": "Extraintestinal Manifestations",
+        "option_description": "IBD-related EIM diagnoses reported by participants"
+      }
+    },
+    "question:how many patients have been diagnosed with ibd related mouth ulcers?": {
+      "question": "How many patients have been diagnosed with ibd related mouth ulcers?",
+      "dataset_scope": "SinC",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "sinc_extraintestinal_manifestations"
+        ],
+        "table": "sinc_extraintestinal_manifestations",
+        "option_label": "Sinc Extraintestinal Manifestations",
+        "option_description": "Checking extraintestinal manifestations for mouth ulcer diagnoses"
+      }
+    },
+    "question:which users have been diagnosed with eim arthritis?": {
+      "question": "Which users have been diagnosed with EIM arthritis?",
+      "dataset_scope": "SinC",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "sinc_extraintestinal_manifestations"
+        ],
+        "table": "sinc_extraintestinal_manifestations",
+        "option_label": "Sinc Extraintestinal Manifestations",
+        "option_description": "Looking up users with EIM arthritis diagnoses"
+      }
+    },
+    "question:which patients have multiple eims?": {
+      "question": "Which patients have multiple EIMs?",
+      "dataset_scope": "SinC",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "sinc_extraintestinal_manifestations"
+        ],
+        "table": "sinc_extraintestinal_manifestations",
+        "option_label": "EIM Survey Data",
+        "option_description": "IBD-related extraintestinal manifestation diagnoses from participants"
+      }
+    },
+    "question:what is the distribution of phq-8 scores across all users?": {
+      "question": "What is the distribution of PHQ-8 scores across all users?",
+      "dataset_scope": "SinC",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "sinc_phq_8"
+        ],
+        "table": "sinc_phq_8",
+        "option_label": "Sinc Phq 8",
+        "option_description": "Analyzing PHQ-8 score distribution from questionnaire data"
+      }
+    },
+    "question:what are the calprotectin levels for users on dates when they were underweight?": {
+      "question": "What are the calprotectin levels for users on dates when they were underweight?",
+      "dataset_scope": "SinC",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "sinc_ibdoc"
+        ],
+        "table": "sinc_ibdoc",
+        "option_label": "Calprotectin Test Results",
+        "option_description": "Fecal calprotectin measurements from IBDoc tests"
+      }
+    },
+    "question:what is the average bmi for users who have average phq8 score greater than or equal to 10?": {
+      "question": "What is the average BMI for users who have average phq8 score greater than or equal to 10?",
+      "dataset_scope": "SinC",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "sinc_phq_8"
+        ],
+        "table": "sinc_phq_8",
+        "option_label": "PHQ-8 Depression Scores",
+        "option_description": "Depression assessment questionnaire with PHQ-8 scoring data"
+      }
+    },
+    "question:what is the phq-8 score for the user who sleeps the least on average on each date.": {
+      "question": "What is the PHQ-8 score for the user who sleeps the least on average on each date.",
+      "dataset_scope": "SinC",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "sinc_phq_8"
+        ],
+        "table": "sinc_phq_8",
+        "option_label": "PHQ-8 Depression Scores",
+        "option_description": "Depression assessment questionnaire with PHQ-8 scores by date"
+      }
+    },
+    "question:how many users have their medication status on record?": {
+      "question": "How many users have their medication status on record?",
+      "dataset_scope": "SinC",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "sinc_chart_review_medications"
+        ],
+        "table": "sinc_chart_review_medications",
+        "option_label": "Chart Review Medications",
+        "option_description": "Medication records from medical chart reviews"
+      }
+    },
+    "question:list each distinct medication named in the sinc_medications_monthly survey questions and assign it to a broad medication category. return one row per medication with columns medication_name and medication_category.": {
+      "question": "List each distinct medication named in the sinc_medications_monthly survey questions and assign it to a broad medication category. Return one row per medication with columns medication_name and medication_category.",
+      "dataset_scope": "SinC",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "sinc_medications_monthly"
+        ],
+        "table": "sinc_medications_monthly",
+        "option_label": "Sinc Medications Monthly",
+        "option_description": "Using monthly medication survey to list distinct medications and categories"
+      }
+    },
+    "question:what percentage of crohn's disease patients have positive family history (among first-degree relatives)?": {
+      "question": "What percentage of Crohn's disease patients have positive family history (among first-degree relatives)?",
+      "dataset_scope": "SinC",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "sinc_surveys"
+        ],
+        "table": "sinc_surveys",
+        "option_label": "Survey Responses",
+        "option_description": "Contains family medical history survey data"
+      }
+    },
+    "question:how does patient-perceived abdominal pain change with same-day oura temperature readiness score? compare pain levels by summarizing the count, average, minimum, and maximum temperature readiness score for each abdominal pain level.": {
+      "question": "How does patient-perceived abdominal pain change with same-day Oura temperature readiness score? Compare pain levels by summarizing the count, average, minimum, and maximum temperature readiness score for each abdominal pain level.",
+      "dataset_scope": "SinC",
+      "resolution": {
+        "resolution_type": "multi_table",
+        "selected_tables": [
+          "sinc_oura_readiness",
+          "sinc_surveys"
+        ],
+        "option_label": "Sinc Oura Readiness + Sinc Surveys",
+        "option_description": "Joining Oura readiness and survey data for pain-temperature analysis"
+      }
+    },
+    "question:extract all demographics information for patient x.": {
+      "question": "Extract all demographics information for patient X.",
+      "dataset_scope": "SinC",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "sinc_study_visit_1_medical_history"
+        ],
+        "table": "sinc_study_visit_1_medical_history",
+        "option_label": "Visit 1 Medical History",
+        "option_description": "Medical history survey from first study visit"
+      }
+    },
+    "question:summarize patient x’s family medical history of disease and related family background information from survey data.": {
+      "question": "Summarize patient X’s family medical history of disease and related family background information from survey data.",
+      "dataset_scope": "SinC",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "sinc_surveys"
+        ],
+        "table": "sinc_surveys",
+        "option_label": "Sinc Surveys",
+        "option_description": "Using survey responses table for family medical history data"
+      }
+    },
+    "question:summarize emotional support for patient x across all monthly assessments by providing the total emotional_support_score, the number of items answered, and the minimum and maximum response for each assessment.": {
+      "question": "Summarize emotional support for patient X across all monthly assessments by providing the total emotional_support_score, the number of items answered, and the minimum and maximum response for each assessment.",
+      "dataset_scope": "SinC",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "sinc_surveys"
+        ],
+        "table": "sinc_surveys",
+        "option_label": "Sinc Surveys",
+        "option_description": "Using surveys table for emotional support assessment data"
+      }
+    },
+    "question:list patient x’s weekly fatigue assessment results and total fatigue score for each assessment.": {
+      "question": "List patient X’s weekly fatigue assessment results and total fatigue score for each assessment.",
+      "dataset_scope": "SinC",
+      "resolution": {
+        "resolution_type": "single_table",
+        "selected_tables": [
+          "sinc_surveys"
+        ],
+        "table": "sinc_surveys",
+        "option_label": "Survey Responses",
+        "option_description": "All survey data including fatigue assessments with scores"
+      }
+    }
+  }
+}
