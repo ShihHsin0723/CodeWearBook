@@ -14,6 +14,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 import query_system as uqs
+from llm_metrics import QueryMetrics
 from scripts.eval.prompt_eval_utils import (
     canonicalize_sql,
     dataframe_match_score,
@@ -340,6 +341,7 @@ def run_case_with_replay(
     error: Optional[str] = None
     expected_df_preview: Dict[str, Any] = {"row_count": None, "preview_rows": []}
     generated_df_preview: Dict[str, Any] = {"row_count": None, "preview_rows": []}
+    metrics = QueryMetrics()
 
     try:
         with ambiguity_replay_context(
@@ -354,14 +356,11 @@ def run_case_with_replay(
         ):
             with patched_input(manual_ambiguity=manual_ambiguity):
                 with suppress_stdout_stderr(quiet):
-                    generated_df, generated_sql, _ = uqs.process_natural_query(
-                        question,
-                        engine,
-                        schema_retriever,
-                        kb_retriever,
-                        impute="no",
-                        session_scope=session_scope,
-                    )
+                    with metrics:
+                        generated_df, generated_sql, _ = uqs.process_natural_query(
+                            question, engine, schema_retriever, kb_retriever,
+                            impute="no", session_scope=session_scope,
+                        )
 
         raw_sql_match = canonicalize_sql(generated_sql) == canonicalize_sql(expected_sql)
         generated_df_preview = dataframe_preview(generated_df, max_rows=5)
@@ -393,6 +392,7 @@ def run_case_with_replay(
         "generated_df_preview": generated_df_preview,
         "error": error,
         "index": idx,
+        **metrics.as_dict(),
     }
 
 

@@ -15,6 +15,7 @@ import pandas as pd
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
+from llm_metrics import QueryMetrics
 
 from clinical_notes_analysis.scripts.run_adverse_event_column_tests import (
     DEFAULT_MPLCONFIGDIR,
@@ -52,30 +53,28 @@ def run_one_prompt(
     schema_retriever,
     kb_retriever,
     scope: str,
-) -> tuple[pd.DataFrame | None, str, str | None]:
+) -> tuple[pd.DataFrame | None, str, str | None, dict]:
     import query_system as uqs
 
     result_df = None
     sql_query = ""
     error = None
+    metrics = QueryMetrics()
     print(f"\n=== Running prompt: {row['id']} ===")
     print(row["question"])
 
     try:
         with patched_input():
-            result_df, sql_query, _explanation = uqs.process_natural_query(
-                row["question"],
-                engine,
-                schema_retriever,
-                kb_retriever,
-                impute="no",
-                session_scope=scope,
-            )
+            with metrics:
+                result_df, sql_query, _explanation = uqs.process_natural_query(
+                    row["question"], engine, schema_retriever, kb_retriever,
+                    impute="no", session_scope=scope,
+                )
     except Exception as exc:
         error = str(exc)
         print(f"Prompt failed: {error}")
 
-    return result_df, sql_query, error
+    return result_df, sql_query, error, metrics.as_dict()
 
 
 def main() -> None:
@@ -115,7 +114,7 @@ def main() -> None:
 
         print(f"\n\n##### Repeat {repeat_index}/{args.repeats}: {run_dir} #####")
         for row in run_rows:
-            result_df, sql_query, error = run_one_prompt(
+            result_df, sql_query, error, metrics = run_one_prompt(
                 row,
                 engine,
                 schema_retriever,
@@ -123,6 +122,7 @@ def main() -> None:
                 uqs.SCOPE_BUMP,
             )
             update_result_row(row, result_df, sql_query, error, df_dir)
+            row.update(metrics)
             save_output(output_path, run_rows)
 
     print(f"\nRepeated run batch written to: {batch_dir}")

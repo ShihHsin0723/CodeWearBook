@@ -14,7 +14,9 @@ LLM_SOURCE = LlmSource.ANTROPIC_API
 EMBEDDING_SOURCE = LlmSource.GEMINI_API
 
 # Public API Models
-ANTROPIC_API_MODEL = "claude-opus-4-1-20250805"
+# Resolve the newest Opus available to this API key once per process.
+# Set ANTHROPIC_MODEL to a concrete ID to pin a reproducible evaluation.
+ANTROPIC_API_MODEL = "latest-opus"
 GEMINI_API_MODEL = "gemini-3-pro-preview"
 OPENAI_API_MODEL = "gpt-5.2"
 TOGETHER_API_MODEL = "moonshotai/Kimi-K2.5"

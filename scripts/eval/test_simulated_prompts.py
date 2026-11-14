@@ -18,6 +18,8 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from config import DB_CONNECTION_STRING
+from llm_metrics import QueryMetrics
+from scripts.eval.summarize_efficiency import DEFAULT_PRICES, summarize_rows
 from dataset_registry import (
     SCOPE_BUMP,
     SCOPE_CROSS,
@@ -424,29 +426,24 @@ def run_case(
         "row_count": None, "preview_rows": []}
     generated_df_preview: Dict[str, Any] = {
         "row_count": None, "preview_rows": []}
+    metrics = QueryMetrics()
 
     try:
         uqs = get_querying_system()
         with patched_input():
             if quiet:
                 with suppress_stdout_stderr():
-                    generated_df, generated_sql, _ = uqs.process_natural_query(
-                        question,
-                        engine,
-                        schema_retriever,
-                        kb_retriever,
-                        impute="no",
-                        session_scope=session_scope,
-                    )
+                    with metrics:
+                        generated_df, generated_sql, _ = uqs.process_natural_query(
+                            question, engine, schema_retriever, kb_retriever,
+                            impute="no", session_scope=session_scope,
+                        )
             else:
-                generated_df, generated_sql, _ = uqs.process_natural_query(
-                    question,
-                    engine,
-                    schema_retriever,
-                    kb_retriever,
-                    impute="no",
-                    session_scope=session_scope,
-                )
+                with metrics:
+                    generated_df, generated_sql, _ = uqs.process_natural_query(
+                        question, engine, schema_retriever, kb_retriever,
+                        impute="no", session_scope=session_scope,
+                    )
 
         raw_sql_match = eval_canonicalize_sql(
             generated_sql) == eval_canonicalize_sql(expected_sql)
@@ -484,6 +481,7 @@ def run_case(
         "expected_df_preview": expected_df_preview,
         "generated_df_preview": generated_df_preview,
         "error": error,
+        **metrics.as_dict(),
     }
 
 
@@ -534,6 +532,10 @@ def summarize(results: List[Dict[str, Any]]) -> Dict[str, Any]:
                 "expected_sql": r.get("expected_sql"),
                 "generated_sql": r.get("generated_sql"),
                 "error": r.get("error"),
+                **{key: r.get(key) for key in (
+                    "query_elapsed_seconds", "llm_elapsed_seconds", "llm_call_count",
+                    "llm_input_tokens", "llm_output_tokens", "llm_total_input_tokens",
+                    "llm_total_tokens", "llm_usage_complete", "llm_calls")},
                 "expected_df_preview": r.get("expected_df_preview"),
                 "generated_df_preview": r.get("generated_df_preview"),
             }
@@ -542,6 +544,7 @@ def summarize(results: List[Dict[str, Any]]) -> Dict[str, Any]:
     sql_mismatch_cases = [c for c in case_details if not c["sql_match"]]
     sql_match_cases = [c for c in case_details if c["sql_match"]]
 
+    prices = json.loads(DEFAULT_PRICES.read_text(encoding="utf-8"))["models"]
     return {
         "total": total,
         "total_prompts": total,
@@ -561,6 +564,7 @@ def summarize(results: List[Dict[str, Any]]) -> Dict[str, Any]:
         "both_match_rate": ratio(both_matches, total),
         "error_count": errors,
         "error_rate": ratio(errors, total),
+        "efficiency": summarize_rows(results, prices),
         "sql_mismatch_cases": sql_mismatch_cases,
         "sql_match_cases": sql_match_cases,
     }

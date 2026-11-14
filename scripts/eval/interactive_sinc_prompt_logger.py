@@ -12,6 +12,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 import query_system as uqs
+from llm_metrics import QueryMetrics
 
 
 def load_prompts(path: Path) -> List[Dict[str, Any]]:
@@ -105,6 +106,9 @@ def merge_rows(
             "generated_df_csv",
             "generated_at",
             "generated_error",
+            "query_elapsed_seconds", "llm_elapsed_seconds", "llm_call_count",
+            "llm_input_tokens", "llm_output_tokens", "llm_total_input_tokens",
+            "llm_total_tokens", "llm_usage_complete", "llm_calls",
         ):
             if key in existing_row:
                 merged_row[key] = existing_row[key]
@@ -216,16 +220,14 @@ def main() -> None:
         sql_query = ""
         explanation = ""
         error = None
+        metrics = QueryMetrics()
 
         try:
-            result_df, sql_query, explanation = uqs.process_natural_query(
-                natural_query,
-                engine,
-                schema_retriever,
-                kb_retriever,
-                impute="no",
-                session_scope=uqs.SCOPE_SINC,
-            )
+            with metrics:
+                result_df, sql_query, explanation = uqs.process_natural_query(
+                    natural_query, engine, schema_retriever, kb_retriever,
+                    impute="no", session_scope=uqs.SCOPE_SINC,
+                )
         except Exception as exc:
             error = str(exc)
             print(f"Query failed: {error}")
@@ -258,6 +260,7 @@ def main() -> None:
             error,
             args.df_dir,
         )
+        matched_row.update(metrics.as_dict())
         save_output(args.output, output_rows)
         print(f"Recorded generated SQL/results for matched SinC prompt in {args.output}")
 

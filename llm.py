@@ -1,4 +1,5 @@
 from functools import lru_cache
+import os
 
 from transformers import AutoTokenizer, AutoModelForCausalLM, AutoConfig, pipeline
 import torch
@@ -15,16 +16,11 @@ from config import (
     TOGETHER_API_MODEL,
 )
 from get_llm_api_keys import get_api_keys
+from llm_metrics import begin_call, end_call, record_call, set_call_attempts, set_call_usage
 
 DEFAULT_LLM_TIMEOUT_SECONDS = 90
 DEFAULT_LLM_MAX_RETRIES = 3
 DEFAULT_LLM_MAX_TOKENS = 2048
-LLM_API_FALLBACK_ORDER = (
-    LlmSource.ANTROPIC_API,
-    LlmSource.OPENAI_API,
-    LlmSource.GEMINI_API,
-    LlmSource.TOGETHER_API,
-)
 LLM_PROVIDER_NAMES = {
     LlmSource.ANTROPIC_API: "Anthropic",
     LlmSource.OPENAI_API: "OpenAI",
@@ -98,26 +94,27 @@ def _raise_for_provider_error(provider_name, response, response_json):
 
 
 def _provider_call(provider, prompt, timeout):
-    if provider == LlmSource.ANTROPIC_API:
-        return call_claude_llm(prompt, timeout=timeout)
-    if provider == LlmSource.OPENAI_API:
-        return call_open_ai_llm(prompt, timeout=timeout)
-    if provider == LlmSource.GEMINI_API:
-        return call_gemini_llm(prompt, timeout=timeout)
-    if provider == LlmSource.TOGETHER_API:
-        return call_together_llm(prompt, timeout=timeout)
-    raise ValueError(f"Unsupported LLM API provider: {provider}")
-
-
-def _ordered_api_providers():
-    if LLM_SOURCE in LLM_API_FALLBACK_ORDER:
-        return LLM_API_FALLBACK_ORDER
-    return (LLM_SOURCE,)
-
-
-def _mark_provider_unavailable(provider, exc):
-    provider_name = LLM_PROVIDER_NAMES.get(provider, str(provider))
-    print(f"{provider_name} LLM API unavailable; trying next provider. {exc}")
+    tokens = begin_call()
+    started = time.perf_counter()
+    error = None
+    try:
+        if provider == LlmSource.ANTROPIC_API:
+            return call_claude_llm(prompt, timeout=timeout)
+        if provider == LlmSource.OPENAI_API:
+            return call_open_ai_llm(prompt, timeout=timeout)
+        if provider == LlmSource.GEMINI_API:
+            return call_gemini_llm(prompt, timeout=timeout)
+        if provider == LlmSource.TOGETHER_API:
+            return call_together_llm(prompt, timeout=timeout)
+        raise ValueError(f"Unsupported LLM API provider: {provider}")
+    except Exception as exc:
+        error = type(exc).__name__
+        raise
+    finally:
+        usage, attempts = end_call(tokens)
+        record_call(LLM_PROVIDER_NAMES.get(provider, str(provider)),
+                    LLM_PROVIDER_MODELS.get(provider), time.perf_counter() - started,
+                    usage, attempts, error)
 
 
 def _select_working_api_provider(timeout=15):
@@ -126,37 +123,27 @@ def _select_working_api_provider(timeout=15):
     if _API_HEALTH_CHECKED and _ACTIVE_API_PROVIDER is not None:
         return _ACTIVE_API_PROVIDER
 
-    failures = []
+    provider = LLM_SOURCE
+    provider_name = LLM_PROVIDER_NAMES.get(provider, str(provider))
+    key_name = LLM_PROVIDER_KEY_NAMES.get(provider)
+    if key_name and not _get_api_key(key_name):
+        raise RuntimeError(f"{provider_name} LLM API unavailable: missing API key")
+
     health_prompt = "Reply with OK."
-    for provider in _ordered_api_providers():
-        provider_name = LLM_PROVIDER_NAMES.get(provider, str(provider))
-        key_name = LLM_PROVIDER_KEY_NAMES.get(provider)
-        if key_name and not _get_api_key(key_name):
-            failures.append(f"{provider_name}: missing API key")
-            print(f"{provider_name} LLM API unavailable; missing API key.")
-            continue
+    try:
+        _provider_call(provider, health_prompt, timeout=timeout)
+    except Exception as exc:
+        raise RuntimeError(f"{provider_name} LLM API unavailable: {exc}") from exc
 
-        try:
-            _provider_call(provider, health_prompt, timeout=timeout)
-        except Exception as exc:
-            failures.append(f"{provider_name}: {exc}")
-            _mark_provider_unavailable(provider, exc)
-            continue
-
-        _ACTIVE_API_PROVIDER = provider
-        _API_HEALTH_CHECKED = True
-        print(
-            f"Using {provider_name} LLM API "
-            f"({LLM_PROVIDER_MODELS.get(provider, 'configured model')})."
-        )
-        return provider
-
+    _ACTIVE_API_PROVIDER = provider
     _API_HEALTH_CHECKED = True
-    raise RuntimeError("No configured LLM API provider is available:\n" + "\n".join(failures))
+    model = _resolve_anthropic_model() if provider == LlmSource.ANTROPIC_API else LLM_PROVIDER_MODELS.get(provider)
+    print(f"Using {provider_name} LLM API ({model}).")
+    return provider
 
 
 def verify_llm_api_available(timeout=15):
-    """Check the API fallback chain once at session startup."""
+    """Check the configured API once at session startup."""
     if LLM_SOURCE == LlmSource.LOCAL:
         return LLM_SOURCE
     return _select_working_api_provider(timeout=timeout)
@@ -168,21 +155,13 @@ def call_llm(prompt=None, timeout: float = DEFAULT_LLM_TIMEOUT_SECONDS):
     if LLM_SOURCE == LlmSource.LOCAL:
         return call_local_llm()
 
-    failures = []
-    preferred_provider = _select_working_api_provider()
-    providers = (preferred_provider,) + tuple(
-        provider for provider in _ordered_api_providers() if provider != preferred_provider
-    )
-    for provider in providers:
-        try:
-            return _provider_call(provider, prompt, timeout)
-        except Exception as exc:
-            failures.append(f"{LLM_PROVIDER_NAMES.get(provider, provider)}: {exc}")
-            _mark_provider_unavailable(provider, exc)
-            _ACTIVE_API_PROVIDER = None
-            _API_HEALTH_CHECKED = False
-
-    raise RuntimeError("No configured LLM API provider is available:\n" + "\n".join(failures))
+    provider = _select_working_api_provider()
+    try:
+        return _provider_call(provider, prompt, timeout)
+    except Exception:
+        _ACTIVE_API_PROVIDER = None
+        _API_HEALTH_CHECKED = False
+        raise
 
 
 def call_local_llm():
@@ -209,6 +188,7 @@ def _post_with_retries(url, headers, payload, timeout, max_retries=DEFAULT_LLM_M
     last_error = None
 
     for attempt in range(1, max_retries + 1):
+        set_call_attempts(attempt)
         try:
             return requests.post(url, headers=headers, json=payload, timeout=timeout)
         except (requests.exceptions.ReadTimeout, requests.exceptions.ConnectionError) as exc:
@@ -218,6 +198,30 @@ def _post_with_retries(url, headers, payload, timeout, max_retries=DEFAULT_LLM_M
             time.sleep(min(2 ** (attempt - 1), 4))
 
     raise last_error
+
+
+@lru_cache(maxsize=1)
+def _resolve_anthropic_model():
+    """Resolve newest available Opus once, preserving one model per process."""
+    configured = os.environ.get("ANTHROPIC_MODEL", ANTROPIC_API_MODEL)
+    if configured != "latest-opus":
+        return configured
+    key = _get_api_key("anthropic_api_key")
+    if not key:
+        raise ValueError("ANTHROPIC_API_KEY is missing")
+    response = requests.get(
+        "https://api.anthropic.com/v1/models",
+        headers={"x-api-key": key, "anthropic-version": "2023-06-01"},
+        params={"limit": 1000}, timeout=15,
+    )
+    response.raise_for_status()
+    payload = response.json()
+    # The Models API lists newer releases first; filter before selecting.
+    models = [item["id"] for item in payload.get("data", [])
+              if item.get("id", "").startswith("claude-opus-")]
+    if not models:
+        raise LLMProviderUnavailableError("No Opus model is available to this API key")
+    return models[0]
 
 
 def call_claude_llm(prompt, timeout: float = DEFAULT_LLM_TIMEOUT_SECONDS):
@@ -233,9 +237,8 @@ def call_claude_llm(prompt, timeout: float = DEFAULT_LLM_TIMEOUT_SECONDS):
     }
 
     payload = {
-        "model": ANTROPIC_API_MODEL,
+        "model": _resolve_anthropic_model(),
         "max_tokens": DEFAULT_LLM_MAX_TOKENS,
-        "temperature": 0.5,
         "messages": [
             {"role": "user", "content": prompt}
         ]
@@ -255,12 +258,19 @@ def call_claude_llm(prompt, timeout: float = DEFAULT_LLM_TIMEOUT_SECONDS):
             f"Failed to parse JSON from Anthropic API: {e}\nRaw response: {response.text}")
 
     _raise_for_provider_error("Anthropic", response, response_json)
+    usage = response_json.get("usage", {})
+    cache_creation = usage.get("cache_creation") or {}
+    set_call_usage(response_json.get("model", payload["model"]),
+                   usage.get("input_tokens"), usage.get("output_tokens"),
+                   cache_creation_input_tokens=usage.get("cache_creation_input_tokens", 0),
+                   cache_read_input_tokens=usage.get("cache_read_input_tokens", 0),
+                   cache_creation_1h_input_tokens=cache_creation.get("ephemeral_1h_input_tokens", 0))
 
-    try:
-        return response_json["content"][0]["text"]
-    except (KeyError, IndexError):
-        raise RuntimeError(
-            f"Invalid response from Claude API:\n{response_json}")
+    text_blocks = [block.get("text", "") for block in response_json.get("content", [])
+                   if block.get("type") == "text"]
+    if not text_blocks:
+        raise RuntimeError(f"Claude response contained no text blocks: {response_json}")
+    return "".join(text_blocks)
 
 
 def call_open_ai_llm(prompt, timeout: float = DEFAULT_LLM_TIMEOUT_SECONDS):
@@ -293,6 +303,10 @@ def call_open_ai_llm(prompt, timeout: float = DEFAULT_LLM_TIMEOUT_SECONDS):
             f"Failed to parse JSON from OpenAI API: {e}\nRaw response: {response.text}")
 
     _raise_for_provider_error("OpenAI", response, response_json)
+    usage = response_json.get("usage", {})
+    set_call_usage(response_json.get("model", OPENAI_API_MODEL),
+                   usage.get("prompt_tokens"), usage.get("completion_tokens"),
+                   cached_input_tokens=(usage.get("prompt_tokens_details") or {}).get("cached_tokens", 0))
 
     if "choices" not in response_json:
         raise RuntimeError(
@@ -338,6 +352,11 @@ def call_gemini_llm(prompt, timeout: float = DEFAULT_LLM_TIMEOUT_SECONDS):
             f"Failed to parse JSON from Gemini API: {e}\nRaw response: {response.text}")
 
     _raise_for_provider_error("Gemini", response, response_json)
+    usage = response_json.get("usageMetadata", {})
+    set_call_usage(response_json.get("modelVersion", GEMINI_API_MODEL),
+                   usage.get("promptTokenCount"),
+                   (usage.get("candidatesTokenCount") or 0) + (usage.get("thoughtsTokenCount") or 0)
+                   if "candidatesTokenCount" in usage or "thoughtsTokenCount" in usage else None)
 
     try:
         return "".join(
@@ -380,6 +399,9 @@ def call_together_llm(prompt, timeout: float = DEFAULT_LLM_TIMEOUT_SECONDS):
             f"Failed to parse JSON from Together API: {e}\nRaw response: {response.text}")
 
     _raise_for_provider_error("Together", response, response_json)
+    usage = response_json.get("usage", {})
+    set_call_usage(response_json.get("model", TOGETHER_API_MODEL),
+                   usage.get("prompt_tokens"), usage.get("completion_tokens"))
 
     if "choices" not in response_json:
         raise RuntimeError(

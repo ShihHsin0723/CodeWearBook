@@ -40,6 +40,10 @@ from llm import call_llm, verify_llm_api_available
 from generate_schema import generate_schema_description
 from knowledge_base_context import sql_guideline
 from sql_scope_validation import validate_sql_for_scope as _validate_sql_for_scope
+from database_guardrails import create_read_only_sqlite_engine
+from retrieval_settings import RetrievalSettings
+
+RETRIEVAL_SETTINGS = RetrievalSettings()
 
 # Number of independent SQL generations used for majority voting
 MAJORITY_VOTE_RUNS = 1
@@ -159,9 +163,13 @@ def initialize_retrieval_context(engine, session_scope):
     ALL_KNOWLEDGE_DOCS = scoped_kb_docs
 
     schema_retriever, schema_vector_store = build_knowledge_index(
-        ALL_SCHEMA_DOCS, embedding_model)
+        ALL_SCHEMA_DOCS, embedding_model,
+        chunk_size=RETRIEVAL_SETTINGS.chunk_size,
+        chunk_overlap=RETRIEVAL_SETTINGS.chunk_overlap)
     kb_retriever, kb_vector_store = build_knowledge_index(
-        ALL_KNOWLEDGE_DOCS, embedding_model)
+        ALL_KNOWLEDGE_DOCS, embedding_model,
+        chunk_size=RETRIEVAL_SETTINGS.chunk_size,
+        chunk_overlap=RETRIEVAL_SETTINGS.chunk_overlap)
 
     return {
         "schema_docs": ALL_SCHEMA_DOCS,
@@ -604,12 +612,13 @@ def _get_schema_matched_kb_docs(selected_tables, limit=2):
     return matched_docs[:limit]
 
 
-def _get_semantic_schema_matched_kb_docs(query, kb_retriever, selected_tables, limit=5):
+def _get_semantic_schema_matched_kb_docs(query, kb_retriever, selected_tables, limit=None):
     """Retrieve schema-linked KB docs by semantic relevance within the selected table scope."""
     if not selected_tables:
         return []
 
-    search_k = max(limit * 8, 24)
+    limit = RETRIEVAL_SETTINGS.kb_keep if limit is None else limit
+    search_k = RETRIEVAL_SETTINGS.kb_search
     if hasattr(kb_retriever, "vectorstore"):
         retrieved_docs = kb_retriever.vectorstore.similarity_search(
             query, k=search_k)
@@ -648,7 +657,7 @@ def _get_semantic_schema_matched_kb_docs(query, kb_retriever, selected_tables, l
 def get_relevant_kb_chunks(query, kb_retriever, selected_tables=None):
     """Retrieve KB chunks with schema-linked priority plus semantic supplements."""
     schema_matched_docs = _get_semantic_schema_matched_kb_docs(
-        query, kb_retriever, selected_tables or [], limit=5)
+        query, kb_retriever, selected_tables or [], limit=RETRIEVAL_SETTINGS.kb_keep)
 
     kb_docs = list(schema_matched_docs)
     boost_counts = {}
@@ -965,7 +974,8 @@ def _build_ambiguity_candidates(natural_query, schema_retriever):
                 }
 
     retrieved_schema_docs = get_relevant_chunks_by_type(
-        natural_query, schema_retriever, type_filter="schema", k=8)
+        natural_query, schema_retriever, type_filter="schema",
+        k=RETRIEVAL_SETTINGS.schema_keep, search_k=RETRIEVAL_SETTINGS.schema_search)
     for rank, doc in enumerate(retrieved_schema_docs):
         table_name = doc.metadata.get(
             "table") or _extract_table_name_from_schema_doc(doc)
@@ -1568,80 +1578,79 @@ def _build_scope_sql_examples(session_scope=None):
     ```
 
     [Example 3]
-    User Query: What are the ages of all patients?
+    User Query: For each participant, return calendar dates with more than one Oura sleep record and the number of records on each date.
     SQL:
     ```SQL
     SELECT
         record_id,
-        CAST(strftime('%Y', event_date) AS INTEGER) -
-        CAST(MIN(substr(answer_text, 1, 4)) AS INTEGER) AS age
-    FROM bump_surveys
-    WHERE question_text LIKE '%Select your date of birth%'
-    GROUP BY record_id, event_date;
+        date(event_date) AS sleep_date,
+        COUNT(*) AS sleep_record_count
+    FROM bump_oura_sleep
+    WHERE record_id IS NOT NULL AND date(event_date) IS NOT NULL
+    GROUP BY record_id, date(event_date)
+    HAVING COUNT(*) > 1
+    ORDER BY record_id, sleep_date;
     ```
 
     [Example 4]
-    User Query: What is the emotional support score for patient sema4_37?
+    User Query: For each participant, list distinct calendar dates with an Oura activity record but no Oura sleep record on the same date.
     SQL:
     ```SQL
-    SELECT
-        record_id,
-        event_date,
-        SUM(
-            CASE
-                WHEN answer_text = 'Never' THEN 1
-                WHEN answer_text = 'Rarely' THEN 2
-                WHEN answer_text = 'Sometimes' THEN 3
-                WHEN answer_text = 'Usually' THEN 4
-                WHEN answer_text = 'Always' THEN 5
-                ELSE 0
-            END
-        ) AS emotional_support_score
-    FROM bump_surveys
-    WHERE record_id = 'sema4_37'
-      AND (
-        question_text LIKE '%someone who will listen to me when I need to talk%'
-        OR question_text LIKE '%someone to confide in or talk to about myself or my problems%'
-        OR question_text LIKE '%someone who makes me feel appreciated%'
-        OR question_text LIKE '%someone to talk with when I have a bad day%'
+    SELECT DISTINCT
+        oa.record_id,
+        date(oa.event_date) AS activity_date
+    FROM bump_oura_activity oa
+    WHERE oa.record_id IS NOT NULL AND date(oa.event_date) IS NOT NULL
+      AND NOT EXISTS (
+        SELECT 1
+        FROM bump_oura_sleep os
+        WHERE os.record_id = oa.record_id
+          AND date(os.event_date) = date(oa.event_date)
       )
-    GROUP BY record_id, event_date
-    ORDER BY event_date;
+    ORDER BY oa.record_id, activity_date;
     ```
     """
 
     sinc_examples = """
     [Example 1]
-    User Query: How many patients are overweight?
-    SQL:
-    ```SQL
-    SELECT COUNT(DISTINCT user_id) AS num_patients
-    FROM sinc_bodyport
-    WHERE bmi_kg_m2 > 25.0;
-    ```
-
-    [Example 2]
-    User Query: What is the PHQ-8 score for user X on each date?
+    User Query: For each user and calendar month, report the minimum, maximum, and range of non-null Bodyport weight in kilograms.
     SQL:
     ```SQL
     SELECT
         user_id,
-        event_date,
-        SUM(
+        strftime('%Y-%m', event_date) AS year_month,
+        MIN(weight_kg) AS min_weight_kg,
+        MAX(weight_kg) AS max_weight_kg,
+        MAX(weight_kg) - MIN(weight_kg) AS weight_range_kg
+    FROM sinc_bodyport
+    WHERE user_id IS NOT NULL AND weight_kg IS NOT NULL
+      AND strftime('%Y-%m', event_date) IS NOT NULL
+    GROUP BY user_id, strftime('%Y-%m', event_date)
+    ORDER BY user_id, year_month;
+    ```
+
+    [Example 2]
+    User Query: For each PHQ-8 question, count recorded responses at each valid answer level from 0 to 3, excluding the difficulty question and unrecognized answers.
+    SQL:
+    ```SQL
+    WITH coded AS (
+        SELECT
+            question,
             CASE
                 WHEN answer LIKE '%(0)%' THEN 0
                 WHEN answer LIKE '%(1)%' THEN 1
                 WHEN answer LIKE '%(2)%' THEN 2
                 WHEN answer LIKE '%(3)%' THEN 3
-                ELSE 0
-            END
-        ) AS phq8_score
-    FROM sinc_phq_8
-    WHERE question NOT LIKE '%how difficult%'
-      AND user_id = 'X'
-    GROUP BY user_id, event_date
-    HAVING COUNT(*) = 8
-    ORDER BY event_date;
+                ELSE NULL
+            END AS answer_level
+        FROM sinc_phq_8
+        WHERE question NOT LIKE '%how difficult%'
+    )
+    SELECT question, answer_level, COUNT(*) AS response_count
+    FROM coded
+    WHERE answer_level IS NOT NULL
+    GROUP BY question, answer_level
+    ORDER BY question, answer_level;
     ```
 
     [Example 3]
@@ -1651,7 +1660,7 @@ def _build_scope_sql_examples(session_scope=None):
     WITH scored AS (
         SELECT
             user_id,
-            event_date,
+            date AS assessment_date,
             SUM(
                 CASE
                     WHEN answer LIKE '%(0)%' THEN 0
@@ -1664,12 +1673,12 @@ def _build_scope_sql_examples(session_scope=None):
         FROM sinc_phq_8
         WHERE question NOT LIKE '%how difficult%'
           AND user_id = 'X'
-        GROUP BY user_id, event_date
+        GROUP BY user_id, date
         HAVING COUNT(*) = 8
     )
     SELECT
         user_id,
-        event_date,
+        assessment_date,
         phq8_score,
         CASE
             WHEN phq8_score < 5 THEN 'Minimal depression'
@@ -1679,30 +1688,35 @@ def _build_scope_sql_examples(session_scope=None):
             ELSE 'Severe depression'
         END AS depression_level
     FROM scored
-    ORDER BY event_date;
+    ORDER BY assessment_date;
     ```
 
     [Example 4]
-    User Query: What are the top 5 most commonly reported EIMs?
+    User Query: For each calendar month, report the number of distinct users who submitted at least one non-empty EIM answer, ignoring leading and trailing spaces.
     SQL:
     ```SQL
-    SELECT answer AS eim, COUNT(*) AS num_reports
+    SELECT
+        strftime('%Y-%m', date) AS year_month,
+        COUNT(DISTINCT user_id) AS responding_users
     FROM sinc_extraintestinal_manifestations
-    WHERE answer IS NOT NULL AND answer != ''
-    GROUP BY answer
-    ORDER BY num_reports DESC
-    LIMIT 5;
+    WHERE user_id IS NOT NULL AND answer IS NOT NULL AND trim(answer) != ''
+      AND strftime('%Y-%m', date) IS NOT NULL
+    GROUP BY strftime('%Y-%m', date)
+    ORDER BY year_month;
     ```
     """
 
     cross_examples = """
     [Example 1]
-    User Query: What is the average sleep score by dataset?
+    User Query: For each dataset, report the earliest and latest calendar dates containing a non-null sleep score.
     SQL:
     ```SQL
-    SELECT dataset, AVG(sleep_score) AS avg_sleep_score
+    SELECT
+        dataset,
+        MIN(date(event_date)) AS first_date,
+        MAX(date(event_date)) AS last_date
     FROM wearable_sleep_daily
-    WHERE sleep_score IS NOT NULL
+    WHERE sleep_score IS NOT NULL AND date(event_date) IS NOT NULL
     GROUP BY dataset
     ORDER BY dataset;
     ```
@@ -1722,12 +1736,12 @@ def _build_scope_sql_examples(session_scope=None):
     ```
 
     [Example 3]
-    User Query: What is the average readiness score by dataset?
+    User Query: For each dataset, count readiness records containing a readiness score but no HRV-balance score.
     SQL:
     ```SQL
-    SELECT dataset, AVG(readiness_score) AS avg_readiness_score
+    SELECT dataset, COUNT(*) AS records_without_hrv_balance
     FROM wearable_readiness_daily
-    WHERE readiness_score IS NOT NULL
+    WHERE readiness_score IS NOT NULL AND score_hrv_balance IS NULL
     GROUP BY dataset
     ORDER BY dataset;
     ```
@@ -2561,7 +2575,8 @@ def get_schema_chunks_by_keyword_match(query, schema_retriever, boosted_tables=N
                 }
 
     semantic_docs = get_relevant_chunks_by_type(
-        query, schema_retriever, type_filter="schema", k=8)
+        query, schema_retriever, type_filter="schema",
+        k=RETRIEVAL_SETTINGS.schema_keep, search_k=RETRIEVAL_SETTINGS.schema_search)
     for rank, doc in enumerate(semantic_docs):
         table_name = doc.metadata.get(
             "table") or _extract_table_name_from_schema_doc(doc)
@@ -2840,7 +2855,10 @@ def _interactive_session(engine, sql_only=True, session_scope=None):
                 "\nWould you like to visualize the data (enter 'v'), enter debug mode to interact with the results ('d'), save to a local file ('s') or 'c' to continue?").lower()
             if action_choice == "v":
                 # visualize_data(results)
-                auto_visualize_data(natural_query.lower(), sql_query, results)
+                try:
+                    auto_visualize_data(natural_query.lower(), sql_query, results)
+                except ValueError as exc:
+                    print(f"Visualization rejected: {exc}")
             elif action_choice == "d":
                 debug_mode(results)
             elif action_choice == "s":
@@ -2851,9 +2869,8 @@ def _interactive_session(engine, sql_only=True, session_scope=None):
 
 
 def create_shared_db_engine():
-    """Create an engine pointing at the configured shared database."""
-    # Connect to an existing shared DB (set DB configs in beginning of file accordingly)
-    return create_engine(DB_CONNECTION_STRING)
+    """Open the existing shared SQLite database with read-only enforcement."""
+    return create_read_only_sqlite_engine(DB_CONNECTION_STRING)
 
 
 def create_in_memory_db_engine(session_scope=SCOPE_BUMP):
