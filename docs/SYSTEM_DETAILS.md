@@ -231,6 +231,17 @@ without SQL generation.
 
 ## SQL generation and voting
 
+Few-shot demonstrations are fixed by scope: four question–SQL pairs for BUMP,
+four for SinC, and six for cross-dataset querying. The separate missingness
+prompt contains two demonstrations instead of these scope blocks. Examples are
+not retrieved from benchmark files or selected by query similarity. The current
+scope blocks replace seven duplicate or closely related benchmark tasks;
+`tests/test_few_shot_examples.py` checks SQL against stored schema metadata,
+verifies synthetic outputs, and checks for identical benchmark questions/SQL.
+This exact-match check does not establish semantic independence. Previously
+saved benchmark results used the examples available when those runs occurred
+and must be rerun to measure performance with the revised demonstrations.
+
 `MAJORITY_VOTE_RUNS` controls how many SQL candidates are generated. The current
 value is `1`, so the single successful candidate is used. Higher values enable
 canonicalization, execution-aware comparison, and majority selection among
@@ -264,13 +275,44 @@ Scope rules are:
 - Registered standalone plugin: only its declared raw-table prefix.
 - Cross-dataset: only `wearable_*` views.
 
+The interactive and benchmark paths that use `create_shared_db_engine()` open
+the existing shared SQLite file with `mode=ro` and enable `PRAGMA query_only`.
+This adds database-level write protection to the application validator. Dataset
+creation and loading into in-memory databases retain their normal write access.
+The validator remains based on keyword and table-reference checks; these controls
+do not provide an isolated sandbox or prove analytical correctness. Query timeouts
+and result-size caps are not currently imposed.
+
+## Automatic visualization safeguards
+
+`auto_visualize_data()` requests a JSON object containing only `chart_type`,
+`x`, `y`, and `title`. The prompt includes the question, SQL, and dataframe column
+names/types, but no dataframe rows. The application rejects Python responses,
+unknown or duplicate JSON fields, unsupported charts, nonexistent columns,
+incompatible numeric types, missing/nonfinite plotting values, and output paths.
+It supports bar, line, scatter, and histogram charts through fixed local plotting
+functions. It does not execute generated Python or accept model-provided filenames.
+PNG paths are assigned locally under `visualizations/`, and each figure is closed
+after rendering. Invalid specifications are reported without ending the interactive
+session. The optional manual chart menu continues to use local plotting code.
+
+Ordinary charts preserve result rows and their order without automatically
+aggregating, sorting, dropping, or truncating data. Histograms explicitly bin
+observations. Missingness plots use a dedicated distribution renderer: percentages
+must be between 0 and 100, and a histogram requires one row per identified
+participant. Precomputed distributions may use bar charts with an explicit
+participant-count column. Missingness charts do not plot participant identifiers
+or attempt to infer percentages from raw missing counts.
+
 ## LLM and embedding configuration
 
 `config.py` currently selects Anthropic for SQL/explanation generation and
-Gemini for embeddings. API fallback order is Anthropic, OpenAI, Gemini, then
-Together. `llm.py` performs a small health request, recognizes quota/rate-limit
-errors, and moves to the next configured provider. API calls retry transient
-connection and read-timeout failures.
+Gemini for embeddings. The Anthropic setting `latest-opus` queries the Models
+API and selects the newest Opus available to the key once per process. Set
+`ANTHROPIC_MODEL` to a concrete model ID to pin a reproducible run. `llm.py`
+uses only the configured LLM provider, performs a small health request,
+recognizes quota/rate-limit errors, and retries transient connection and
+read-timeout failures.
 
 Provider model names, local model paths, output/cache directories, and the
 shared SQLite path are configured in `config.py`. API keys are loaded from the

@@ -90,10 +90,10 @@ def _restore_full_documents(docs):
     return restored_docs
 
 
-def get_relevant_chunks_by_type(query, retriever, type_filter=None, k=2, return_full_documents=False):
+def get_relevant_chunks_by_type(query, retriever, type_filter=None, k=2, return_full_documents=False, search_k=None):
     # Over-fetch before type filtering so schema/rule retrieval is not capped by
     # the retriever's default top-k across all document types.
-    search_k = max(k * 4, 12)
+    search_k = max(k * 4, 12) if search_k is None else search_k
 
     if hasattr(retriever, "vectorstore"):
         retrieved_docs = retriever.vectorstore.similarity_search(query, k=search_k)

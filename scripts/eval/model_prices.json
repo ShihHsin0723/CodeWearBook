@@ -1,0 +1,14 @@
+{
+  "as_of": "2026-09-30",
+  "unit": "USD per million tokens",
+  "source": "https://platform.claude.com/docs/en/models/opus-5-5/overview",
+  "models": {
+    "claude-opus-5-5": {
+      "input": 4,
+      "output": 20,
+      "cache_write_5m": 5,
+      "cache_write_1h": 8,
+      "cache_read": 0.2
+    }
+  }
+}
